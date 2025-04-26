@@ -37,10 +37,10 @@ const Register = () => {
       </div>
       <Card>
         <CardBody className="p-8">
-          <h2 className="text-xl font-bold text-blue-500">
+          <h2 className="text-2xl font-bold text-blue-500">
             Registrasi Akun
           </h2>
-          <p className="mb-4 text-small">
+          <p className="mb-4 mt-2 text-small">
             Sudah punya Akun?&nbsp;
             <Link
               href="/auth/login"
