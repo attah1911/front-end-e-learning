@@ -67,7 +67,7 @@ const DashboardLayoutSidebar = (props: PropTypes) => {
           variant="light"
           className="flex justify-start rounded-lg px-2 py-1.5"
           size="lg"
-          onClick={() => signOut({callbackUrl: "/auth/login"})}
+          onClick={() => signOut()}
         >
           <CiLogout />
           Logout
