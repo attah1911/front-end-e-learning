@@ -19,9 +19,8 @@ const instance = axios.create({
 
 instance.interceptors.request.use(
   async (request) => {
-
     // diubah
-    const session = await getSession() as CustomSession | null;
+    const session: CustomSession | null = await getSession() as CustomSession | null;
     if (session && session.accessToken) {
         request.headers.Authorization = `Bearer ${session.accessToken}`;
     }

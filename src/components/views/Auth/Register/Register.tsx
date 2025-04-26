@@ -5,7 +5,7 @@ import {
   CardBody,
   Input,
   Spinner,
-} from "@nextui-org/react";
+} from "@nextui-org/react"; 
 import Image from "next/image";
 import Link from "next/link";
 import useRegister from "./useRegister";
@@ -25,26 +25,26 @@ const Register = () => {
   } = useRegister();
 
   return (
-    <div className="flex w-full flex-col items-center justify-center gap-10 lg:flex-row lg:gap-20">
+    <div className="flex w-full flex-col items-center justify-center gap-10 lg:flex-row lg:gap-40 lg:ml-10">
       <div className="flex w-full flex-col items-center justify-center gap-10 lg:w-1/3">
         <Image
-          src="/images/illustrations/register.jpg"
+          src="/images/illustrations/register.svg"
           alt="register"
-          className="w-2/3 lg:w-full"
+          className="w-2/3 lg:w-[175%] max-w-none"
           width={1024}
           height={1024}
         />
       </div>
       <Card>
         <CardBody className="p-8">
-          <h2 className="text-xl font-bold text-blue-600 text-danger-500">
+          <h2 className="text-xl font-bold text-blue-500">
             Registrasi Akun
           </h2>
           <p className="mb-4 text-small">
             Sudah punya Akun?&nbsp;
             <Link
               href="/auth/login"
-              className="font-semibold text-blue-600 text-danger-400"
+              className="font-semibold text-blue-500"
             >
               Login Disini
             </Link>
