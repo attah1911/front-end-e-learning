@@ -17,7 +17,7 @@ const useLogin = () => {
   const router = useRouter();
   const [isVisible, setIsVisible] = useState(false);
   const toggleVisibility = () => setIsVisible(!isVisible);
-  const callbackUrl: string = (router.query.callbackUrl as string) || "/";
+  const callbackUrl: string = (router.query.callbackUrl as string) || "";
 
   const {
     control,
@@ -29,14 +29,15 @@ const useLogin = () => {
     resolver: yupResolver(loginSchema),
   });
 
-  const loginService = async (payload: ILogin) => {
-    const result = await signIn("credentials", {
-      ...payload,
-      redirect: false,
-      callbackUrl,
-    });
-    if(result?.error && result?.status === 401) {
+  const loginService = async (payload: ILogin): Promise<ILogin> => {
+    try {
+      const result = await authServices.login(payload);
+      if (!result.data.data) {
         throw new Error("Login Gagal");
+      }
+      return payload;
+    } catch (error) {
+      throw new Error("Login Gagal");
     }
   };
 
@@ -47,9 +48,50 @@ const useLogin = () => {
         message: error.message,
       });
     },
-    onSuccess: () => {
-      router.push(callbackUrl);
-      reset();
+    onSuccess: async (data) => {
+      try {
+        // First login to get the token
+        const loginResult = await authServices.login(data);
+        const token = loginResult.data.data;
+
+        // Get user profile with token to get role
+        const profileResult = await authServices.getProfileWithToken(token);
+        const role = profileResult.data.data.role;
+
+        // Now sign in with NextAuth
+        const result = await signIn("credentials", {
+          ...data,
+          redirect: false,
+        });
+
+        if (result?.ok) {
+          let redirectUrl = callbackUrl;
+
+          if (!redirectUrl) {
+            switch (role) {
+              case "admin":
+                redirectUrl = "/admin/dashboard";
+                break;
+              case "guru":
+                redirectUrl = "/guru/dashboard";
+                break;
+              case "murid":
+                redirectUrl = "/murid/dashboard";
+                break;
+              default:
+                redirectUrl = "/";
+            }
+          }
+
+          router.push(redirectUrl);
+          reset();
+        }
+      } catch (error) {
+        console.error("Error during login process:", error);
+        setError("root", {
+          message: "Gagal mendapatkan informasi pengguna",
+        });
+      }
     },
   });
 

@@ -1,15 +1,15 @@
 import React from "react";
 import DashboardLayout from "../../../components/layouts/DashboardLayout";
-import Dashboard from "../../../components/views/Admin/Dashboard";
+import DataAkun from "../../../components/views/Admin/DataAkun";
 import PageHead from "../../../components/commons/PageHead";
 
-const DashboardAdminPage: React.FC = () => {
+const DataAkunPage: React.FC = () => {
   return (
     <DashboardLayout>
-      <PageHead title="Dashboard Admin" />
-      <Dashboard />
+      <PageHead title="Data Akun" />
+      <DataAkun />
     </DashboardLayout>
   );
 };
 
-export default DashboardAdminPage;
+export default DataAkunPage;

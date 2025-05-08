@@ -1,6 +1,7 @@
-import instance from "@/libs/axios/instance";
+import instance from "../libs/axios/instance";
 import endpoint from "./endpoint.constant";
-import { IActivation, ILogin, IRegister } from "@/types/Auth";
+import { IActivation, ILogin, IRegister } from "../types/Auth";
+import { IProfileUpdate } from "../types/Profile";
 
 const authServices = {
   register: (payload: IRegister) =>
@@ -13,6 +14,12 @@ const authServices = {
       headers: {
         Authorization: `Bearer ${token}`,
       },
+    }),
+  updateProfile: (payload: IProfileUpdate) =>
+    instance.put(`${endpoint.AUTH}/me`, payload, {
+      headers: {
+        'Content-Type': 'application/json'
+      }
     }),
 };
 

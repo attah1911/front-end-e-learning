@@ -1,15 +1,15 @@
 import React from "react";
 import DashboardLayout from "../../../components/layouts/DashboardLayout";
-import Dashboard from "../../../components/views/Admin/Dashboard";
+import DataMurid from "../../../components/views/Admin/DataMurid";
 import PageHead from "../../../components/commons/PageHead";
 
-const DashboardAdminPage: React.FC = () => {
+const DataMuridPage: React.FC = () => {
   return (
     <DashboardLayout>
-      <PageHead title="Dashboard Admin" />
-      <Dashboard />
+      <PageHead title="Data Murid" />
+      <DataMurid />
     </DashboardLayout>
   );
 };
 
-export default DashboardAdminPage;
+export default DataMuridPage;

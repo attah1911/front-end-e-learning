@@ -1,5 +1,5 @@
 import { BiTask } from "react-icons/bi";
-import { CiGrid41, CiSettings } from "react-icons/ci";
+import { CiGrid41, CiSettings, CiUser } from "react-icons/ci";
 import { FaChalkboardTeacher } from "react-icons/fa";
 import { FaBook } from "react-icons/fa6";
 import { GoChecklist } from "react-icons/go";
@@ -10,7 +10,7 @@ const SIDEBAR_MURID = [
     {
         key: "dashboard",
         label: "Dashboard",
-        href: "/murid",
+        href: "/murid/dashboard",
         icon: <CiGrid41 />,
     },
     {
@@ -31,14 +31,20 @@ const SIDEBAR_MURID = [
         href: "/murid/setting",
         icon: <CiSettings />,
     },
-]
+];
 
 const SIDEBAR_ADMIN = [
     {
         key: "dashboard",
         label: "Dashboard",
-        href: "/admin",
+        href: "/admin/dashboard",
         icon: <CiGrid41 />,
+    },
+    {
+        key: "profile",
+        label: "Profil",
+        href: "/admin/profile",
+        icon: <CiUser />,
     },
     {
         key: "dataakun",
@@ -57,20 +63,20 @@ const SIDEBAR_ADMIN = [
         label: "Data Murid",
         href: "/admin/datamurid",
         icon: <PiStudent />,
-    }, 
+    },
     {
         key: "datamatapelajaran",
         label: "Data Mata Pelajaran",
         href: "/admin/datamatapelajaran",
         icon: <FaBook />,
     },
-]
+];
 
 const SIDEBAR_GURU = [
     {
         key: "dashboard",
         label: "Dashboard",
-        href: "/guru",
+        href: "/guru/dashboard",
         icon: <CiGrid41 />,
     },
     {
@@ -97,10 +103,6 @@ const SIDEBAR_GURU = [
         href: "/guru/setting",
         icon: <CiSettings />,
     },
-]
+];
 
-export {
-    SIDEBAR_MURID,
-    SIDEBAR_ADMIN,
-    SIDEBAR_GURU    
-}
+export { SIDEBAR_MURID, SIDEBAR_ADMIN, SIDEBAR_GURU };
