@@ -11,7 +11,7 @@ import Link from "next/link";
 import useRegister from "./useRegister";
 import { FaEye, FaEyeSlash } from "react-icons/fa6";
 import { Controller } from "react-hook-form";
-import { cn } from "@/utils/cn";
+import { cn } from "../../../../utils/cn";
 
 const Register = () => {
   const {
@@ -174,7 +174,6 @@ const Register = () => {
         </CardBody>
       </Card>
     </div>
-    //15:53
   );
 };
 

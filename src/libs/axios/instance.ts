@@ -95,11 +95,14 @@ instance.interceptors.response.use(
       data: error.response?.data
     });
 
-    // Handle 401/403 errors
+    // Handle 401/403 errors (including token expiration)
     if (error.response.status === 401 || error.response.status === 403) {
       if (typeof window !== 'undefined') {
-        // Sign out and redirect to login page
-        signOut({ callbackUrl: '/auth/login' }).catch(console.error);
+        // Sign out and redirect to login page with callback URL
+        const currentPath = window.location.pathname;
+        signOut({ 
+          callbackUrl: `/auth/login?callbackUrl=${encodeURIComponent(currentPath)}`
+        }).catch(console.error);
       }
     }
 

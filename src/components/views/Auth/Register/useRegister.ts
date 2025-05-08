@@ -2,8 +2,8 @@ import { useState } from "react";
 import * as yup from "yup";
 import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
-import authServices from "@/services/auth.service";
-import { IRegister } from "@/types/Auth";
+import authServices from "../../../../services/auth.service";
+import { IRegister } from "../../../../types/Auth";
 import { useMutation } from "@tanstack/react-query";
 import { useRouter } from "next/router";
 
@@ -67,7 +67,14 @@ const useRegister = () => {
     },
   });
 
-  const handleRegister = (data: IRegister) => mutateRegister(data)
+  const handleRegister = (data: any) => {
+    // Add role as 'murid' by default for regular registration
+    const payload: IRegister = {
+      ...data,
+      role: 'murid'
+    };
+    mutateRegister(payload);
+  }
 
   return {
     visiblePassword,
