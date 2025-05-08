@@ -1,6 +1,6 @@
-import AuthLayout from "@/components/layouts/AuthLayout";
-import Activation from "@/components/views/Auth/Activation";
-import authServices from "@/services/auth.service";
+import AuthLayout from "../../../components/layouts/AuthLayout";
+import Activation from "../../../components/views/Auth/Activation";
+import authServices from "../../../services/auth.service";
 
 interface PropTypes {
     status: 'success' | 'failed'
@@ -16,7 +16,7 @@ const ActivationPage = (props: PropTypes) => {
 
 export async function getServerSideProps(context: { query: { code: string } }) {
   try {
-    const result = await authServices.activation({ code: context.query.code });
+    const result = await authServices.activation({ token: context.query.code });
     if (result.data.data) {
       return {
         props: {
