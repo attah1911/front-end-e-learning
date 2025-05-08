@@ -1,6 +1,6 @@
-import React from "react";
+import React, { useEffect, Key } from "react";
 import { Input, Textarea, Button, Select, SelectItem } from "@nextui-org/react";
-import { MataPelajaran, TeacherOption, kategoriList } from "../../../../types/MataPelajaran";
+import { MataPelajaran, TeacherOption, kategoriList, tingkatKelasList, TeacherData } from "../../../../types/MataPelajaran";
 import BaseModal from "../../../commons/Modal/BaseModal";
 import { useForm, Controller } from "react-hook-form";
 
@@ -14,7 +14,7 @@ interface CreateEditMataPelajaranModalProps {
   teachers: TeacherOption[];
 }
 
-const CreateEditMataPelajaranModal: React.FC<CreateEditMataPelajaranModalProps> = ({
+const CreateEditMataPelajaranModal = ({
   isOpen,
   onClose,
   onSubmit,
@@ -22,21 +22,47 @@ const CreateEditMataPelajaranModal: React.FC<CreateEditMataPelajaranModalProps> 
   mode,
   isSubmitting = false,
   teachers
-}) => {
+}: CreateEditMataPelajaranModalProps): JSX.Element => {
   const {
     control,
     handleSubmit,
     formState: { errors },
-    reset
+    reset,
+    setValue
   } = useForm<MataPelajaran>({
     defaultValues: {
-      judul: initialData?.judul || "",
-      kategori: initialData?.kategori || "",
-      deskripsi: initialData?.deskripsi || "",
-      guru: initialData?.guru || "",
-      tingkatKelas: initialData?.tingkatKelas || "",
+      judul: "",
+      kategori: "",
+      deskripsi: "",
+      guru: "",
+      tingkatKelas: "",
     },
   });
+
+  // Reset form when modal opens/closes or when initialData changes
+  useEffect(() => {
+    if (isOpen && initialData) {
+      // Set each field individually to ensure proper type handling
+      setValue('judul', initialData.judul || '');
+      setValue('kategori', initialData.kategori || '');
+      setValue('deskripsi', initialData.deskripsi || '');
+      setValue('tingkatKelas', initialData.tingkatKelas || '');
+      
+      // Handle guru field which can be either string or object
+      if (initialData.guru) {
+        const guruId = typeof initialData.guru === 'object' ? initialData.guru._id : initialData.guru;
+        setValue('guru', guruId);
+      }
+    } else {
+      reset({
+        judul: "",
+        kategori: "",
+        deskripsi: "",
+        guru: "",
+        tingkatKelas: "",
+      });
+    }
+  }, [isOpen, initialData, setValue, reset]);
 
   const handleFormSubmit = async (data: MataPelajaran) => {
     await onSubmit(data);
@@ -45,19 +71,41 @@ const CreateEditMataPelajaranModal: React.FC<CreateEditMataPelajaranModalProps> 
 
   const modalTitle = mode === 'create' ? 'Tambah Mata Pelajaran' : 'Edit Mata Pelajaran';
 
+  // Function to format tingkat kelas for display
+  const formatTingkatKelas = (kelas: string) => {
+    return kelas.replace('KELAS_', 'Kelas ');
+  };
+
+  const submitForm = () => {
+    handleSubmit(handleFormSubmit)();
+  };
+
+  // Helper function to get selected keys for Select components
+  const getSelectedKeys = (value: string | undefined) => {
+    if (!value) return new Set<string>();
+    return new Set([value]);
+  };
+
+  // Helper function to get guru ID from value
+  const getGuruId = (value: string | TeacherData | undefined) => {
+    if (!value) return new Set<string>();
+    const id = typeof value === 'object' ? value._id : value;
+    return new Set([id]);
+  };
+
   const footer = (
     <>
       <Button
         color="danger"
         variant="light"
-        onClick={onClose}
-        disabled={isSubmitting}
+        onPress={onClose}
+        isDisabled={isSubmitting}
       >
         Batal
       </Button>
       <Button
         color="primary"
-        onClick={() => handleSubmit(handleFormSubmit)()}
+        onPress={submitForm}
         isLoading={isSubmitting}
       >
         {mode === 'create' ? 'Tambah' : 'Simpan'}
@@ -74,18 +122,21 @@ const CreateEditMataPelajaranModal: React.FC<CreateEditMataPelajaranModalProps> 
       size="2xl"
       isSubmitting={isSubmitting}
     >
-      <form className="space-y-4" onSubmit={handleSubmit(handleFormSubmit)}>
+      <form className="space-y-4" onSubmit={(e) => {
+        e.preventDefault();
+        handleSubmit(handleFormSubmit)();
+      }}>
         <Controller
           name="judul"
           control={control}
           rules={{ required: "Judul harus diisi" }}
-          render={({ field }) => (
+          render={({ field, fieldState }) => (
             <Input
               {...field}
               label="Judul"
               placeholder="Masukkan judul mata pelajaran"
-              errorMessage={errors.judul?.message}
-              isInvalid={!!errors.judul}
+              errorMessage={fieldState.error?.message}
+              isInvalid={!!fieldState.error}
             />
           )}
         />
@@ -94,15 +145,14 @@ const CreateEditMataPelajaranModal: React.FC<CreateEditMataPelajaranModalProps> 
           name="kategori"
           control={control}
           rules={{ required: "Kategori harus diisi" }}
-          render={({ field }) => (
+          render={({ field: { onChange, value }, fieldState }) => (
             <Select
-              {...field}
               label="Kategori"
               placeholder="Pilih kategori"
-              errorMessage={errors.kategori?.message}
-              isInvalid={!!errors.kategori}
-              selectedKeys={field.value ? [field.value] : []}
-              onChange={(e) => field.onChange(e.target.value)}
+              errorMessage={fieldState.error?.message}
+              isInvalid={!!fieldState.error}
+              selectedKeys={getSelectedKeys(value)}
+              onChange={(e) => onChange(e.target.value)}
             >
               {kategoriList.map((kategori: string) => (
                 <SelectItem key={kategori} value={kategori}>
@@ -117,14 +167,21 @@ const CreateEditMataPelajaranModal: React.FC<CreateEditMataPelajaranModalProps> 
           name="tingkatKelas"
           control={control}
           rules={{ required: "Tingkat kelas harus diisi" }}
-          render={({ field }) => (
-            <Input
-              {...field}
+          render={({ field: { onChange, value }, fieldState }) => (
+            <Select
               label="Tingkat Kelas"
-              placeholder="Masukkan tingkat kelas"
-              errorMessage={errors.tingkatKelas?.message}
-              isInvalid={!!errors.tingkatKelas}
-            />
+              placeholder="Pilih tingkat kelas"
+              errorMessage={fieldState.error?.message}
+              isInvalid={!!fieldState.error}
+              selectedKeys={getSelectedKeys(value)}
+              onChange={(e) => onChange(e.target.value)}
+            >
+              {tingkatKelasList.map((kelas) => (
+                <SelectItem key={kelas} value={kelas}>
+                  {formatTingkatKelas(kelas)}
+                </SelectItem>
+              ))}
+            </Select>
           )}
         />
 
@@ -132,13 +189,13 @@ const CreateEditMataPelajaranModal: React.FC<CreateEditMataPelajaranModalProps> 
           name="deskripsi"
           control={control}
           rules={{ required: "Deskripsi harus diisi" }}
-          render={({ field }) => (
+          render={({ field, fieldState }) => (
             <Textarea
               {...field}
               label="Deskripsi"
               placeholder="Masukkan deskripsi mata pelajaran"
-              errorMessage={errors.deskripsi?.message}
-              isInvalid={!!errors.deskripsi}
+              errorMessage={fieldState.error?.message}
+              isInvalid={!!fieldState.error}
             />
           )}
         />
@@ -147,14 +204,14 @@ const CreateEditMataPelajaranModal: React.FC<CreateEditMataPelajaranModalProps> 
           name="guru"
           control={control}
           rules={{ required: "Guru harus dipilih" }}
-          render={({ field }) => (
+          render={({ field: { onChange, value }, fieldState }) => (
             <Select
               label="Guru"
               placeholder="Pilih guru"
-              errorMessage={errors.guru?.message}
-              isInvalid={!!errors.guru}
-              selectedKeys={field.value ? [typeof field.value === 'string' ? field.value : field.value._id] : []}
-              onChange={(e) => field.onChange(e.target.value)}
+              errorMessage={fieldState.error?.message}
+              isInvalid={!!fieldState.error}
+              selectedKeys={getGuruId(value)}
+              onChange={(e) => onChange(e.target.value)}
               classNames={{
                 base: "w-full",
                 trigger: "h-11"

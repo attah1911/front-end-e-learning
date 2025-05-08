@@ -32,6 +32,13 @@ const ROLES = [
   { label: 'Murid', value: 'murid' },
 ];
 
+// Validation patterns
+const PATTERNS = {
+  fullName: /^[A-Za-zÀ-ÿ\s]+$/,  // Allow letters, spaces and accented characters
+  username: /^[a-zA-Z0-9_-]+$/,
+  email: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i
+};
+
 const CreateEditUserModal: React.FC<CreateEditUserModalProps> = ({
   isOpen,
   onClose,
@@ -45,7 +52,8 @@ const CreateEditUserModal: React.FC<CreateEditUserModalProps> = ({
     handleSubmit,
     formState: { errors },
     reset,
-    watch
+    watch,
+    trigger
   } = useForm<UserSubmitData>({
     defaultValues: {
       fullName: initialData?.fullName || "",
@@ -55,11 +63,23 @@ const CreateEditUserModal: React.FC<CreateEditUserModalProps> = ({
       password: "",
       confirmPassword: "",
     },
+    mode: "onChange" // Enable real-time validation
   });
 
   const handleFormSubmit = async (data: UserSubmitData) => {
-    await onSubmit(data);
-    reset();
+    try {
+      // Trigger validation for all fields before submitting
+      const isValid = await trigger();
+      if (!isValid) return;
+
+      // Remove confirmPassword before submitting
+      const { confirmPassword, ...submitData } = data;
+      
+      await onSubmit(submitData);
+      reset();
+    } catch (error) {
+      console.error('Form submission error:', error);
+    }
   };
 
   const modalTitle = mode === 'create' ? 'Tambah Akun' : 'Edit Akun';
@@ -93,11 +113,36 @@ const CreateEditUserModal: React.FC<CreateEditUserModalProps> = ({
       size="2xl"
       isSubmitting={isSubmitting}
     >
-      <form className="space-y-4">
+      <form 
+        className="space-y-4" 
+        onSubmit={(e) => {
+          e.preventDefault();
+          handleSubmit(handleFormSubmit)(e);
+        }}
+      >
         <Controller
           name="fullName"
           control={control}
-          rules={{ required: "Nama lengkap harus diisi" }}
+          rules={{
+            required: "Nama lengkap harus diisi",
+            pattern: {
+              value: PATTERNS.fullName,
+              message: "Nama lengkap hanya boleh berisi huruf dan spasi"
+            },
+            validate: (value: string | undefined) => {
+              if (!value) return "Nama lengkap harus diisi";
+              if (/\d/.test(value)) {
+                return "Nama lengkap tidak boleh mengandung angka";
+              }
+              if (value.trim().length < 3) {
+                return "Nama lengkap minimal 3 karakter";
+              }
+              if (value.trim().length > 50) {
+                return "Nama lengkap maksimal 50 karakter";
+              }
+              return true;
+            }
+          }}
           render={({ field }) => (
             <Input
               {...field}
@@ -112,7 +157,21 @@ const CreateEditUserModal: React.FC<CreateEditUserModalProps> = ({
         <Controller
           name="username"
           control={control}
-          rules={{ required: "Username harus diisi" }}
+          rules={{
+            required: "Username harus diisi",
+            pattern: {
+              value: PATTERNS.username,
+              message: "Username hanya boleh berisi huruf, angka, underscore, dan dash"
+            },
+            minLength: {
+              value: 3,
+              message: "Username minimal 3 karakter"
+            },
+            maxLength: {
+              value: 20,
+              message: "Username maksimal 20 karakter"
+            }
+          }}
           render={({ field }) => (
             <Input
               {...field}
@@ -130,8 +189,12 @@ const CreateEditUserModal: React.FC<CreateEditUserModalProps> = ({
           rules={{
             required: "Email harus diisi",
             pattern: {
-              value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-              message: "Email tidak valid"
+              value: PATTERNS.email,
+              message: "Format email tidak valid"
+            },
+            maxLength: {
+              value: 50,
+              message: "Email terlalu panjang"
             }
           }}
           render={({ field }) => (
@@ -155,7 +218,13 @@ const CreateEditUserModal: React.FC<CreateEditUserModalProps> = ({
                 required: "Password harus diisi",
                 minLength: {
                   value: 6,
-                  message: "Password minimal 6 karakter"
+                  message: "Password setidaknya harus 6 karakter"
+                },
+                validate: {
+                  hasUpperCase: (value: string | undefined) => 
+                    value && /[A-Z]/.test(value) || "Password harus memiliki setidaknya satu huruf kapital",
+                  hasNumber: (value: string | undefined) =>
+                    value && /\d/.test(value) || "Password harus memiliki setidaknya satu angka"
                 }
               }}
               render={({ field }) => (
@@ -175,7 +244,7 @@ const CreateEditUserModal: React.FC<CreateEditUserModalProps> = ({
               control={control}
               rules={{
                 required: "Konfirmasi password harus diisi",
-                validate: (value) =>
+                validate: (value: string | undefined) =>
                   value === watch("password") || "Password tidak sesuai"
               }}
               render={({ field }) => (
@@ -195,24 +264,26 @@ const CreateEditUserModal: React.FC<CreateEditUserModalProps> = ({
         <Controller
           name="role"
           control={control}
-          rules={{ required: "Role harus dipilih" }}
+          rules={{ 
+            required: "Role harus dipilih",
+            validate: (value: string | undefined) => 
+              value && ROLES.some(role => role.value === value) || "Role tidak valid"
+          }}
           render={({ field }) => (
-            <div>
-              <Select
-                label="Role"
-                placeholder="Pilih role"
-                errorMessage={errors.role?.message}
-                isInvalid={!!errors.role}
-                selectedKeys={field.value ? [field.value] : []}
-                onChange={(e) => field.onChange(e.target.value)}
-              >
-                {ROLES.map((role) => (
-                  <SelectItem key={role.value} value={role.value}>
-                    {role.label}
-                  </SelectItem>
-                ))}
-              </Select>
-            </div>
+            <Select
+              label="Role"
+              placeholder="Pilih role"
+              errorMessage={errors.role?.message}
+              isInvalid={!!errors.role}
+              selectedKeys={field.value ? [field.value] : []}
+              onChange={(e) => field.onChange(e.target.value)}
+            >
+              {ROLES.map((role) => (
+                <SelectItem key={role.value} value={role.value}>
+                  {role.label}
+                </SelectItem>
+              ))}
+            </Select>
           )}
         />
       </form>

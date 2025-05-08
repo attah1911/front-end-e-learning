@@ -10,6 +10,14 @@ interface Student {
   noTelp: string;
 }
 
+interface ValidationErrors {
+  fullName?: string;
+  email?: string;
+  nis?: string;
+  kelas?: string;
+  noTelp?: string;
+}
+
 interface CreateEditStudentModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -33,6 +41,8 @@ const CreateEditStudentModal: React.FC<CreateEditStudentModalProps> = ({
     noTelp: ''
   });
 
+  const [errors, setErrors] = React.useState<ValidationErrors>({});
+
   useEffect(() => {
     if (initialData) {
       setFormData(initialData);
@@ -45,11 +55,91 @@ const CreateEditStudentModal: React.FC<CreateEditStudentModalProps> = ({
         noTelp: ''
       });
     }
-  }, [initialData]);
+    // Reset errors when modal opens/closes
+    setErrors({});
+  }, [initialData, isOpen]);
+
+  const validateFullName = (value: string): string | undefined => {
+    if (!value) return 'Nama lengkap harus diisi';
+    if (!/^[a-zA-Z\s]*$/.test(value)) return 'Nama lengkap hanya boleh berisi huruf';
+    return undefined;
+  };
+
+  const validateEmail = (value: string): string | undefined => {
+    if (!value) return 'Email harus diisi';
+    if (!/^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i.test(value)) {
+      return 'Format email tidak valid';
+    }
+    return undefined;
+  };
+
+  const validateNIS = (value: string): string | undefined => {
+    if (!value) return 'NIS harus diisi';
+    if (!/^\d+$/.test(value)) return 'NIS hanya boleh berisi angka';
+    return undefined;
+  };
+
+  const validateKelas = (value: string): string | undefined => {
+    if (!value) return 'Kelas harus dipilih';
+    return undefined;
+  };
+
+  const validateNoTelp = (value: string): string | undefined => {
+    if (!value) return 'Nomor telepon harus diisi';
+    if (!/^\d+$/.test(value)) return 'Nomor telepon hanya boleh berisi angka';
+    return undefined;
+  };
+
+  const handleFieldChange = (field: keyof Student, value: string) => {
+    setFormData({ ...formData, [field]: value });
+    
+    // Validate field on change
+    let error: string | undefined;
+    switch (field) {
+      case 'fullName':
+        error = validateFullName(value);
+        break;
+      case 'email':
+        error = validateEmail(value);
+        break;
+      case 'nis':
+        error = validateNIS(value);
+        break;
+      case 'kelas':
+        error = validateKelas(value);
+        break;
+      case 'noTelp':
+        error = validateNoTelp(value);
+        break;
+    }
+    
+    setErrors(prev => ({
+      ...prev,
+      [field]: error
+    }));
+  };
+
+  const validateForm = (): boolean => {
+    const newErrors: ValidationErrors = {
+      fullName: validateFullName(formData.fullName),
+      email: validateEmail(formData.email),
+      nis: validateNIS(formData.nis),
+      kelas: validateKelas(formData.kelas),
+      noTelp: validateNoTelp(formData.noTelp)
+    };
+
+    setErrors(newErrors);
+
+    // Check if there are any errors
+    return !Object.values(newErrors).some(error => error !== undefined);
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSubmit(formData);
+    
+    if (validateForm()) {
+      onSubmit(formData);
+    }
   };
 
   const kelasList = [
@@ -76,8 +166,9 @@ const CreateEditStudentModal: React.FC<CreateEditStudentModalProps> = ({
                 <Input
                   label="Nama Lengkap"
                   value={formData.fullName}
-                  onValueChange={(value) => setFormData({ ...formData, fullName: value })}
-                  required
+                  onValueChange={(value) => handleFieldChange('fullName', value)}
+                  isInvalid={!!errors.fullName}
+                  errorMessage={errors.fullName}
                   variant="bordered"
                   placeholder="Masukkan nama lengkap"
                 />
@@ -85,23 +176,27 @@ const CreateEditStudentModal: React.FC<CreateEditStudentModalProps> = ({
                   label="Email"
                   type="email"
                   value={formData.email}
-                  onValueChange={(value) => setFormData({ ...formData, email: value })}
-                  required
+                  onValueChange={(value) => handleFieldChange('email', value)}
+                  isInvalid={!!errors.email}
+                  errorMessage={errors.email}
                   variant="bordered"
                   placeholder="Masukkan email"
                 />
                 <Input
                   label="NIS"
                   value={formData.nis}
-                  onValueChange={(value) => setFormData({ ...formData, nis: value })}
-                  required
+                  onValueChange={(value) => handleFieldChange('nis', value)}
+                  isInvalid={!!errors.nis}
+                  errorMessage={errors.nis}
                   variant="bordered"
                   placeholder="Masukkan NIS"
                 />
                 <Select
                   label="Kelas"
                   selectedKeys={[formData.kelas]}
-                  onChange={(e) => setFormData({ ...formData, kelas: e.target.value })}
+                  onChange={(e) => handleFieldChange('kelas', e.target.value)}
+                  isInvalid={!!errors.kelas}
+                  errorMessage={errors.kelas}
                   variant="bordered"
                 >
                   {kelasList.map((kelas) => (
@@ -113,8 +208,9 @@ const CreateEditStudentModal: React.FC<CreateEditStudentModalProps> = ({
                 <Input
                   label="No. Telepon"
                   value={formData.noTelp}
-                  onValueChange={(value) => setFormData({ ...formData, noTelp: value })}
-                  required
+                  onValueChange={(value) => handleFieldChange('noTelp', value)}
+                  isInvalid={!!errors.noTelp}
+                  errorMessage={errors.noTelp}
                   variant="bordered"
                   placeholder="Masukkan nomor telepon"
                 />

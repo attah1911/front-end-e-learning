@@ -161,9 +161,15 @@ const DataMataPelajaran: React.FC = () => {
     { 
       key: 'deskripsi', 
       label: 'Deskripsi',
-      render: (value: string) => (
-        <div className="text-sm text-gray-500 line-clamp-2">{value}</div>
-      )
+      render: (value: string) => {
+        const maxLength = 30;
+        const truncated = value.length > maxLength ? value.substring(0, maxLength) + '...' : value;
+        return (
+          <div className="text-sm text-gray-500" title={value}>
+            {truncated}
+          </div>
+        );
+      }
     }
   ];
 

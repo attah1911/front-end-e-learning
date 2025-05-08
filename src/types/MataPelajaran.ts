@@ -14,6 +14,12 @@ export interface TeacherData {
   nip?: string;
 }
 
+export const tingkatKelasList = [
+  'KELAS_7',
+  'KELAS_8',
+  'KELAS_9'
+] as const;
+
 export const kategoriList = [
   'Matematika',
   'IPA',

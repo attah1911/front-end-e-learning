@@ -1,6 +1,7 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, Button, Input } from "@nextui-org/react";
 import { Teacher, TeacherInput } from "../../../../types/TeacherTypes";
+import { useForm, Controller } from "react-hook-form";
 
 interface CreateEditTeacherModalProps {
   isOpen: boolean;
@@ -11,6 +12,14 @@ interface CreateEditTeacherModalProps {
   isSubmitting?: boolean;
 }
 
+// Validation patterns
+const PATTERNS = {
+  fullName: /^[A-Za-zÀ-ÿ\s]+$/,  // Only letters and spaces
+  email: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+  nrk: /^\d+$/,  // Only numbers
+  phone: /^\d+$/  // Only numbers
+};
+
 const CreateEditTeacherModal: React.FC<CreateEditTeacherModalProps> = ({
   isOpen,
   onClose,
@@ -19,30 +28,41 @@ const CreateEditTeacherModal: React.FC<CreateEditTeacherModalProps> = ({
   mode,
   isSubmitting
 }) => {
-  const [formData, setFormData] = React.useState<TeacherInput>({
-    fullName: '',
-    email: '',
-    nrk: '',
-    noTelp: ''
+  const {
+    control,
+    handleSubmit,
+    reset,
+    formState: { errors }
+  } = useForm<TeacherInput>({
+    defaultValues: {
+      fullName: initialData?.fullName || '',
+      email: initialData?.email || '',
+      nrk: initialData?.nrk || '',
+      noTelp: initialData?.noTelp || ''
+    },
+    mode: "onChange"
   });
 
-  useEffect(() => {
+  React.useEffect(() => {
     if (initialData) {
       const { _id, ...rest } = initialData;
-      setFormData(rest);
+      reset(rest);
     } else {
-      setFormData({
+      reset({
         fullName: '',
         email: '',
         nrk: '',
         noTelp: ''
       });
     }
-  }, [initialData]);
+  }, [initialData, reset]);
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    onSubmit(formData);
+  const handleFormSubmit = async (data: TeacherInput) => {
+    try {
+      await onSubmit(data);
+    } catch (error) {
+      console.error('Form submission error:', error);
+    }
   };
 
   return (
@@ -51,6 +71,7 @@ const CreateEditTeacherModal: React.FC<CreateEditTeacherModalProps> = ({
       onClose={onClose}
       backdrop="blur"
       placement="center"
+      size="2xl"
     >
       <ModalContent>
         {(onClose) => (
@@ -59,39 +80,150 @@ const CreateEditTeacherModal: React.FC<CreateEditTeacherModalProps> = ({
               {mode === 'create' ? 'Tambah Guru Baru' : 'Edit Guru'}
             </ModalHeader>
             <ModalBody>
-              <form id="teacherForm" onSubmit={handleSubmit} className="space-y-4">
-                <Input
-                  label="Nama Lengkap"
-                  value={formData.fullName}
-                  onValueChange={(value) => setFormData({ ...formData, fullName: value })}
-                  required
-                  variant="bordered"
-                  placeholder="Masukkan nama lengkap"
+              <form 
+                id="teacherForm" 
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  handleSubmit(handleFormSubmit)(e);
+                }} 
+                className="space-y-4"
+              >
+                <Controller
+                  name="fullName"
+                  control={control}
+                  rules={{
+                    required: "Nama lengkap harus diisi",
+                    pattern: {
+                      value: PATTERNS.fullName,
+                      message: "Nama lengkap hanya boleh berisi huruf"
+                    },
+                    validate: (value: string) => {
+                      if (!value) return "Nama lengkap harus diisi";
+                      if (/\d/.test(value)) {
+                        return "Nama lengkap tidak boleh mengandung angka";
+                      }
+                      if (value.trim().length < 3) {
+                        return "Nama lengkap minimal 3 karakter";
+                      }
+                      if (value.trim().length > 50) {
+                        return "Nama lengkap maksimal 50 karakter";
+                      }
+                      return true;
+                    }
+                  }}
+                  render={({ field }) => (
+                    <Input
+                      {...field}
+                      label="Nama Lengkap"
+                      variant="bordered"
+                      placeholder="Masukkan nama lengkap"
+                      errorMessage={errors.fullName?.message}
+                      isInvalid={!!errors.fullName}
+                    />
+                  )}
                 />
-                <Input
-                  label="Email"
-                  type="email"
-                  value={formData.email}
-                  onValueChange={(value) => setFormData({ ...formData, email: value })}
-                  required
-                  variant="bordered"
-                  placeholder="Masukkan email"
+
+                <Controller
+                  name="email"
+                  control={control}
+                  rules={{
+                    required: "Email harus diisi",
+                    pattern: {
+                      value: PATTERNS.email,
+                      message: "Format email tidak valid"
+                    },
+                    maxLength: {
+                      value: 50,
+                      message: "Email terlalu panjang"
+                    }
+                  }}
+                  render={({ field }) => (
+                    <Input
+                      {...field}
+                      type="email"
+                      label="Email"
+                      variant="bordered"
+                      placeholder="Masukkan email"
+                      errorMessage={errors.email?.message}
+                      isInvalid={!!errors.email}
+                    />
+                  )}
                 />
-                <Input
-                  label="NRK"
-                  value={formData.nrk}
-                  onValueChange={(value) => setFormData({ ...formData, nrk: value })}
-                  required
-                  variant="bordered"
-                  placeholder="Masukkan NRK"
+
+                <Controller
+                  name="nrk"
+                  control={control}
+                  rules={{
+                    required: "NRK harus diisi",
+                    pattern: {
+                      value: PATTERNS.nrk,
+                      message: "NRK hanya boleh berisi angka"
+                    },
+                    validate: (value: string) => {
+                      if (!value) return "NRK harus diisi";
+                      if (!/^\d+$/.test(value)) {
+                        return "NRK hanya boleh berisi angka";
+                      }
+                      if (value.includes(' ')) {
+                        return "NRK tidak boleh mengandung spasi";
+                      }
+                      if (value.length < 5) {
+                        return "NRK minimal 5 digit";
+                      }
+                      if (value.length > 20) {
+                        return "NRK maksimal 20 digit";
+                      }
+                      return true;
+                    }
+                  }}
+                  render={({ field }) => (
+                    <Input
+                      {...field}
+                      label="NRK"
+                      variant="bordered"
+                      placeholder="Masukkan NRK"
+                      errorMessage={errors.nrk?.message}
+                      isInvalid={!!errors.nrk}
+                    />
+                  )}
                 />
-                <Input
-                  label="No. Telepon"
-                  value={formData.noTelp}
-                  onValueChange={(value) => setFormData({ ...formData, noTelp: value })}
-                  required
-                  variant="bordered"
-                  placeholder="Masukkan nomor telepon"
+
+                <Controller
+                  name="noTelp"
+                  control={control}
+                  rules={{
+                    required: "Nomor telepon harus diisi",
+                    pattern: {
+                      value: PATTERNS.phone,
+                      message: "Nomor telepon hanya boleh berisi angka"
+                    },
+                    validate: (value: string) => {
+                      if (!value) return "Nomor telepon harus diisi";
+                      if (!/^\d+$/.test(value)) {
+                        return "Nomor telepon hanya boleh berisi angka";
+                      }
+                      if (value.includes(' ')) {
+                        return "Nomor telepon tidak boleh mengandung spasi";
+                      }
+                      if (value.length < 10) {
+                        return "Nomor telepon minimal 10 digit";
+                      }
+                      if (value.length > 13) {
+                        return "Nomor telepon maksimal 13 digit";
+                      }
+                      return true;
+                    }
+                  }}
+                  render={({ field }) => (
+                    <Input
+                      {...field}
+                      label="No. Telepon"
+                      variant="bordered"
+                      placeholder="Masukkan nomor telepon"
+                      errorMessage={errors.noTelp?.message}
+                      isInvalid={!!errors.noTelp}
+                    />
+                  )}
                 />
               </form>
             </ModalBody>
@@ -99,7 +231,12 @@ const CreateEditTeacherModal: React.FC<CreateEditTeacherModalProps> = ({
               <Button color="danger" variant="light" onPress={onClose}>
                 Batal
               </Button>
-              <Button color="primary" type="submit" form="teacherForm" isLoading={isSubmitting}>
+              <Button 
+                color="primary" 
+                type="submit" 
+                form="teacherForm" 
+                isLoading={isSubmitting}
+              >
                 {mode === 'create' ? 'Tambah' : 'Simpan'}
               </Button>
             </ModalFooter>
