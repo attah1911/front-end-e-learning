@@ -1,9 +1,9 @@
-import environment from "@/config/environment";
+import environment from "../../../config/environment";
 import NextAuth, { DefaultSession, NextAuthOptions, User } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { JWT } from "next-auth/jwt";
-import { UserExtended } from "@/types/Auth";
-import authServices from "@/services/auth.service";
+import { UserExtended } from "../../../types/Auth";
+import authServices from "../../../services/auth.service";
 
 declare module "next-auth" {
   interface Session extends DefaultSession {
